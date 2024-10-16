@@ -1,0 +1,207 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+title: Web Application Logic Flow Schema
+description: Schema for validating .lgc logic flow files with task-specific validation.
+type: object
+required:
+  - logic
+  - states
+properties:
+  logic:
+    type: array
+    description: "Array of logic tasks and control structures, with backend and frontend markers"
+    items:
+      oneOf:
+        - $ref: "#/definitions/task"
+        - $ref: "#/definitions/control_structure"
+
+  states:
+    type: object
+    description: "Defines all the state variables used in the application"
+    additionalProperties:
+      type: object
+      properties:
+        initial_value:
+          description: "Initial value of the state variable"
+        description:
+          type: string
+          description: "Description of the state variable"
+
+definitions:
+  # Definition for a generic task
+  task:
+    type: object
+    additionalProperties: false
+    oneOf:
+      - $ref: "#/definitions/api_task"
+      - $ref: "#/definitions/ui_task"
+      - $ref: "#/definitions/sql_task"
+      - $ref: "#/definitions/cache_task"
+      - $ref: "#/definitions/state_task"
+      - $ref: "#/definitions/generic_task"
+
+  # Specific definition for an API task
+  api_task:
+    type: object
+    required: 
+      - api
+    properties:
+      api:
+        type: string
+        description: "API call task description"
+      apiURI:
+        type: string
+        format: uri
+        description: "Optional URI for the API call"
+
+  # Specific definition for a UI task
+  ui_task:
+    type: object
+    required:
+      - ui
+    properties:
+      ui:
+        type: string
+        description: "UI update task description"
+      uiURI:
+        type: string
+        format: uri
+        description: "Optional URI for the UI update"
+
+  # Specific definition for a SQL task
+  sql_task:
+    type: object
+    required:
+      - sql
+    properties:
+      sql:
+        type: string
+        description: "SQL task description"
+      query:
+        type: string
+        description: "Optional SQL query to be executed"
+      parameters:
+        type: array
+        items:
+          type: string
+        description: "Optional parameters for the SQL query"
+
+  # Specific definition for a Cache task
+  cache_task:
+    type: object
+    required:
+      - cache
+    properties:
+      cache:
+        type: string
+        description: "Cache operation (set/get/invalidate)"
+      key:
+        type: string
+        description: "Optional cache key"
+      value:
+        type: string
+        description: "Cache value (for set operations)"
+      expiry:
+        type: integer
+        description: "Cache expiry in seconds"
+
+  # Specific definition for a state update task
+  state_task:
+    type: object
+    required:
+      - state
+    properties:
+      state:
+        type: string
+        description: "State update or assignment"
+
+  # Generic task definition
+  generic_task:
+    type: object
+    required:
+      - task
+    properties:
+      task:
+        type: string
+        description: "Generic task description"
+
+  # Definition for control structures like if, switch, for
+  control_structure:
+    type: object
+    oneOf:
+      - $ref: "#/definitions/if_block"
+      - $ref: "#/definitions/for_loop"
+      - $ref: "#/definitions/switch_statement"
+
+  # Definition for an if-then-else block
+  if_block:
+    type: object
+    required:
+      - if
+    properties:
+      if:
+        type: string
+        description: "If condition with inline identifier and frontend/backend marker"
+      then:
+        type: array
+        items:
+          $ref: "#/definitions/task_or_control_structure"
+      elif:
+        type: array
+        items:
+          type: object
+          properties:
+            condition:
+              type: string
+              description: "Elif condition"
+            then:
+              type: array
+              items:
+                $ref: "#/definitions/task_or_control_structure"
+      else:
+        type: array
+        items:
+          $ref: "#/definitions/task_or_control_structure"
+        description: "Optional else block"
+
+  # Definition for a for loop
+  for_loop:
+    type: object
+    required:
+      - for
+      - do
+    properties:
+      for:
+        type: string
+        description: "For loop variable and collection"
+      do:
+        type: array
+        items:
+          $ref: "#/definitions/task_or_control_structure"
+
+  # Definition for a switch statement
+  switch_statement:
+    type: object
+    required:
+      - switch
+      - cases
+    properties:
+      switch:
+        type: string
+        description: "Expression for the switch statement"
+      cases:
+        type: object
+        patternProperties:
+          "^[a-zA-Z0-9_-]+$":
+            type: array
+            items:
+              $ref: "#/definitions/task_or_control_structure"
+      default:
+        type: array
+        items:
+          $ref: "#/definitions/task_or_control_structure"
+
+  # Task or Control Structure can be referenced in then, elif, etc.
+  task_or_control_structure:
+    oneOf:
+      - $ref: "#/definitions/task"
+      - $ref: "#/definitions/control_structure"

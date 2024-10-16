@@ -1,0 +1,62 @@
+logic:
+  - task: Initialize application  # [@task1] [@backend]
+  - state: appState = 'starting'  # [@task2] [@backend]
+  - api: Fetch user data  # [@task3] [@backend]
+    URI: 'https://api.example.com/users/{{userId}}'  # [@api1]
+  - state: userData = apiResponse  # [@task4] [@backend]
+  - if: userData.active == true  # [@task5] [@backend]
+    then:
+      - state: appState = 'active'  # [@task6] [@backend]
+      - task: Load user dashboard  # [@task7] [@frontend]
+    else:
+      - state: appState = 'inactive'  # [@task8] [@backend]
+      - task: Show account inactive message  # [@task9] [@frontend]
+  - for: item in cart.items  # [@task10] [@backend]
+    do:
+      - state: totalPrice += item.price  # [@task11] [@backend]
+  - switch: userData.role  # [@task12] [@backend]
+    cases:
+      admin:
+        - task: Load admin panel  # [@task13] [@frontend]
+      editor:
+        - task: Load editor tools  # [@task14] [@frontend]
+    default:
+      - task: Load standard dashboard  # [@task15] [@frontend]
+  - sql: Insert new order  # [@task16] [@backend]
+    query: |
+      INSERT INTO orders (id, userId, total) VALUES (?, ?, ?)  # [@sql1]
+    parameters:
+      - orderId  # [@param1]
+      - userData.id  # [@param2]
+      - totalPrice  # [@param3]
+  - cache: userSession_{{userData.id}} = sessionData  # [@task17] [@backend]
+    expiry: 3600  # 1 hour  # [@cache1]
+  - ui: Update user profile page  # [@task18] [@frontend]
+    URI: 'https://figma.com/project/{{profilePageId}}'  # [@ui1]
+
+states:
+  appState:
+    initial_value: 'initialized'  # [@state1]
+    description: Current state of the application  # [@desc1]
+
+  userData:
+    initial_value: {}  # [@state2]
+    description: Data retrieved about the user  # [@desc2]
+
+  cart:
+    initial_value:
+      items: []  # [@state3]
+      totalPrice: 0.0  # [@state4]
+    description: User's shopping cart  # [@desc3]
+
+  totalPrice:
+    initial_value: 0.0  # [@state5]
+    description: Total price of items in the cart  # [@desc4]
+
+  sessionData:
+    initial_value: null  # [@state6]
+    description: Data associated with the user's session  # [@desc5]
+
+  orderId:
+    initial_value: null  # [@state7]
+    description: Unique identifier for the current order  # [@desc6]
