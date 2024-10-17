@@ -1,62 +1,86 @@
 logic:
-  - task: Initialize application  # [@task1] [@backend]
-  - state: appState = 'starting'  # [@task2] [@backend]
-  - api: Fetch user data  # [@task3] [@backend]
-    URI: 'https://api.example.com/users/{{userId}}'  # [@api1]
-  - state: userData = apiResponse  # [@task4] [@backend]
-  - if: userData.active == true  # [@task5] [@backend]
+  # API task with optional apiURI
+  - api: Fetch user data  # [@backend]
+    apiURI: 'https://api.example.com/users/{{userId}}'  # Optional field
+  
+  # API task without apiURI (valid since apiURI is optional)
+  - api: Log user activity  # [@backend]
+  
+  # UI task with optional uiURI
+  - ui: Update profile page  # [@frontend]
+    uiURI: 'https://figma.com/project/{{profilePageId}}'  # Optional field
+
+  # UI task without uiURI (valid since uiURI is optional)
+  - ui: Display settings page  # [@frontend]
+  
+  # SQL task with optional query and parameters
+  - sql: Insert order data  # [@backend]
+    query: |
+      INSERT INTO orders (id, userId, total) VALUES (?, ?, ?)
+    parameters:
+      - orderId
+      - userId
+      - totalPrice  # Optional parameters
+    
+  # SQL task without query (valid since query is optional)
+  - sql: Update user preferences  # [@backend]
+  
+  # Cache task with key, value, and expiry
+  - cache: Set user session  # [@backend]
+    key: userSession_{{userId}}  # Optional field
+    value: sessionData
+    expiry: 3600  # Cache expiry in seconds
+
+  # Cache task without key (valid since key is optional)
+  - cache: Invalidate session cache  # [@backend]
+  
+  # State update task
+  - state: userLoggedIn = true  # [@backend]
+
+  # Generic task without specific properties
+  - task: Log user interaction  # [@backend]
+  
+  # If-Then-Else block (else block is optional)
+  - if: userLoggedIn == true  # [@backend]
     then:
-      - state: appState = 'active'  # [@task6] [@backend]
-      - task: Load user dashboard  # [@task7] [@frontend]
+      - task: Load user dashboard  # [@frontend]
     else:
-      - state: appState = 'inactive'  # [@task8] [@backend]
-      - task: Show account inactive message  # [@task9] [@frontend]
-  - for: item in cart.items  # [@task10] [@backend]
+      - task: Redirect to login page  # [@frontend]
+
+  # For loop
+  - for: item in cart.items  # [@backend]
     do:
-      - state: totalPrice += item.price  # [@task11] [@backend]
-  - switch: userData.role  # [@task12] [@backend]
+      - state: totalPrice += item.price  # [@backend]
+
+  # Switch statement with cases
+  - switch: userRole  # [@backend]
     cases:
       admin:
-        - task: Load admin panel  # [@task13] [@frontend]
-      editor:
-        - task: Load editor tools  # [@task14] [@frontend]
+        - task: Load admin panel  # [@frontend]
+      user:
+        - task: Load user dashboard  # [@frontend]
     default:
-      - task: Load standard dashboard  # [@task15] [@frontend]
-  - sql: Insert new order  # [@task16] [@backend]
-    query: |
-      INSERT INTO orders (id, userId, total) VALUES (?, ?, ?)  # [@sql1]
-    parameters:
-      - orderId  # [@param1]
-      - userData.id  # [@param2]
-      - totalPrice  # [@param3]
-  - cache: userSession_{{userData.id}} = sessionData  # [@task17] [@backend]
-    expiry: 3600  # 1 hour  # [@cache1]
-  - ui: Update user profile page  # [@task18] [@frontend]
-    URI: 'https://figma.com/project/{{profilePageId}}'  # [@ui1]
-
+      - task: Load default dashboard  # [@frontend]
+  
 states:
-  appState:
-    initial_value: 'initialized'  # [@state1]
-    description: Current state of the application  # [@desc1]
+  userLoggedIn:
+    initial_value: false
+    description: "Tracks whether the user is logged in"
 
-  userData:
-    initial_value: {}  # [@state2]
-    description: Data retrieved about the user  # [@desc2]
+  userProfile:
+    initial_value: {}
+    description: "Holds the user's profile data"
 
   cart:
     initial_value:
-      items: []  # [@state3]
-      totalPrice: 0.0  # [@state4]
-    description: User's shopping cart  # [@desc3]
-
-  totalPrice:
-    initial_value: 0.0  # [@state5]
-    description: Total price of items in the cart  # [@desc4]
+      items: []
+      totalPrice: 0.0
+    description: "Tracks the shopping cart and total price"
 
   sessionData:
-    initial_value: null  # [@state6]
-    description: Data associated with the user's session  # [@desc5]
+    initial_value: null
+    description: "Stores session data for the user"
 
   orderId:
-    initial_value: null  # [@state7]
-    description: Unique identifier for the current order  # [@desc6]
+    initial_value: null
+    description: "The order ID for the current order"

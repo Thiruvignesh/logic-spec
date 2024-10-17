@@ -27,22 +27,10 @@ properties:
           description: "Description of the state variable"
 
 definitions:
-  # Definition for a generic task
-  task:
-    type: object
-    additionalProperties: false
-    oneOf:
-      - $ref: "#/definitions/api_task"
-      - $ref: "#/definitions/ui_task"
-      - $ref: "#/definitions/sql_task"
-      - $ref: "#/definitions/cache_task"
-      - $ref: "#/definitions/state_task"
-      - $ref: "#/definitions/generic_task"
-
   # Specific definition for an API task
   api_task:
     type: object
-    required: 
+    required:
       - api
     properties:
       api:
@@ -157,6 +145,9 @@ definitions:
               type: array
               items:
                 $ref: "#/definitions/task_or_control_structure"
+          required:
+            - condition
+            - then
       else:
         type: array
         items:
@@ -199,6 +190,16 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/task_or_control_structure"
+
+  # **NEW** Definition for task
+  task:
+    oneOf:
+      - $ref: "#/definitions/api_task"
+      - $ref: "#/definitions/ui_task"
+      - $ref: "#/definitions/sql_task"
+      - $ref: "#/definitions/cache_task"
+      - $ref: "#/definitions/state_task"
+      - $ref: "#/definitions/generic_task"
 
   # Task or Control Structure can be referenced in then, elif, etc.
   task_or_control_structure:
