@@ -1,3 +1,4 @@
+$schema: 'https://raw.githubusercontent.com/Thiruvignesh/logic-spec/refs/heads/main/schema.yaml'
 logic:
   # API task with optional apiURI
   - api: Fetch user data  # [@backend]
